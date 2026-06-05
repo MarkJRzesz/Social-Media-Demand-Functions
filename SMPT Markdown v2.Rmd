@@ -1,0 +1,195 @@
+---
+title: "Social Media Outputs v2"
+date: "2025-12-16"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+load(file = ".RData")
+library(emmeans)
+library(psych)
+library(data.table)
+```
+
+# Model Comparisons ANOVA Tables, Regression Outputs, and Post-Hoc Tests
+
+Model Comparisons
+
+Tests between demand models with and without social media measures (i.e., BSMAS, SMEQ, and SMDS). 
+
+smptSNDMLM = No social media covariates
+
+smptSNDMLMSM = With covariates no interactions
+
+smptSNDMLMInt = With covariates and interactions
+```{r model comparisons 1}
+anova(smptSNDMLM, smptSNDMLMSM, smptSNDMLMInt)
+```
+
+## Tests between demand models without any social media measures and with social media measures and interactions . 
+```{r model comparisons 2}
+anova(smptSNDMLM, smptSNDMLMSM)
+```
+
+## ANOVA tables for all three models
+
+No Covariates
+```{r ANOVA tables}
+anova(smptSNDMLM, type = "marginal") |> round(3)
+```
+
+Social Media Covariates no Interactions
+```{r ANOVA tables SM}
+anova(smptSNDMLMSM, type = "marginal") |> round(3)
+```
+
+Social Media Covariates with Interactions with Condition
+```{r ANOVA tables Int}
+anova(smptSNDMLMInt, type = "marginal") |> round(3)
+```
+
+## Regression tables for all three models
+
+No Covariates
+```{r Regression Outputs}
+summary(smptSNDMLM)$tTable |> round(3)
+```
+
+Social Media Covariates no Interactions
+```{r Regression Outputs SM}
+summary(smptSNDMLMSM)$tTable |> round(3)
+```
+
+Social Media Covariates with Interactions with Condition
+```{r Regression Outputs Int}
+summary(smptSNDMLMInt)$tTable |> round(3)
+```
+
+## Post-hoc contrasts for Model with No Social Media Demographics
+
+${Q_{0}}$ by condition
+```{r Simple Post-Hocs q0}
+emmeans(smptSNDMLM, param = "q0", pairwise ~ condition)
+```
+
+
+$\alpha$ by condition
+```{r Simple Post-Hocs alpha}
+emmeans(smptSNDMLM, param = "alpha", pairwise ~ condition)
+```
+
+# Post-hoc contrasts for Model with Social Media Demographic Interactions
+
+$Q_{0}$ by Condition
+```{r Interactions Post-Hocs q0 Condition}
+emmeans(smptSNDMLMInt, param = "q0", pairwise ~ condition)
+
+```
+
+$Q_{0}$ by Social Media by Condition
+```{r Interactions Post-Hocs q0 SM}
+emtrends(smptSNDMLMInt, param = "q0", var = "BSMAS", pairwise ~ condition)
+emtrends(smptSNDMLMInt, param = "q0", var = "SMDS", pairwise ~ condition)
+emtrends(smptSNDMLMInt, param = "q0", var = "SMEQ", pairwise ~ condition)
+```
+
+
+$\alpha$ by Condition
+```{r Interactions Post-Hocs alpha Condition}
+emmeans(smptSNDMLMInt, param = "alpha", pairwise ~ condition)
+
+```
+
+$\alpha$ by Social Media by Condition
+```{r Interactions Post-Hocs alpha SM}
+emtrends(smptSNDMLMInt, param = "alpha", var = "BSMAS", pairwise ~ condition)
+emtrends(smptSNDMLMInt, param = "alpha", var = "SMDS", pairwise ~ condition)
+emtrends(smptSNDMLMInt, param = "alpha", var = "SMEQ", pairwise ~ condition)
+```
+
+# Comparisons between Rzeszutek et al. (2025) and Koffarnus et al. (2015) models
+SND = Rzeszutek et al. (2025), Simplified Exponential with Normalized Decay 
+
+EXPD = Koffarnus et al. (2015), Exponentiated Model of Demand
+
+## R2 and MAE values for Rzeszutek et al.
+```{r Model Fits for Rzeszutek et al. Model}
+"Overall R2"
+1 - sum((predict(smptSNDMLM) - (smptDataClean$y))^2)/
+  sum((mean((smptDataClean$y)) - (smptDataClean$y))^2)
+"Individual Median R2"
+individualSNDR2[!is.infinite(R2), median(R2, na.rm = TRUE)] |> round(3)
+"Individual Median R2 by condition"
+individualSNDR2[!is.infinite(R2), median(R2, na.rm = TRUE), by = .(condition)]
+"Individual R2 range by condition"
+individualSNDR2[, range(R2, na.rm = TRUE), by = .(condition)]
+
+"Overall MAE"
+mean(abs(predict(smptSNDMLM) - (smptDataClean$y))) |> round(3)
+"Individual Median MAE"
+individualSNDMAE[, median(MAE, na.rm = TRUE)] |> round(3)
+"Individual MAE by condition"
+individualSNDMAE[, median(MAE, na.rm = TRUE), by = .(condition)]
+"Individual MAE range by condition"
+individualSNDMAE[, range(MAE, na.rm = TRUE), by = .(condition)]
+```
+
+## R2 and MAE values for Koffarnus et al.
+```{r Model Fits for Koffarnus et al. Model}
+"Overall R2"
+1 - sum((predict(smptEXPDMLM) - (smptDataClean$y))^2)/
+  sum((mean((smptDataClean$y)) - (smptDataClean$y))^2)
+"Individual Median R2"
+individualEXPDR2[!is.infinite(R2), median(R2, na.rm = TRUE)] |> round(3)
+"Individual Median R2 by condition"
+individualEXPDR2[!is.infinite(R2), median(R2, na.rm = TRUE), by = .(condition)]
+"Individual R2 range by condition"
+individualEXPDR2[, range(R2, na.rm = TRUE), by = .(condition)]
+
+"Overall MAE"
+mean(abs(predict(smptEXPDMLM) - (smptDataClean$y))) |> round(3)
+"Individual Median MAE"
+individualEXPDMAE[, median(MAE, na.rm = TRUE)] |> round(3)
+"Individual MAE by condition"
+individualEXPDMAE[, median(MAE, na.rm = TRUE), by = .(condition)]
+"Invdividual MAE range by condition"
+individualEXPDMAE[, range(MAE, na.rm = TRUE), by = .(condition)]
+```
+
+## Correlations between Model Parameters
+```{r Model Parameters, fig.height= 4, fig.width= 4}
+pairs.panels(data.frame(coef(smptSNDMLM)["q0.(Intercept)"] + coef(smptSNDMLM)["q0.conditionAttention"],
+                        coef(smptEXPDMLM)["q0.(Intercept)"] + coef(smptEXPDMLM)["q0.conditionAttention"]), 
+             main = expression(bold("SND vs EXPD"~Q[0]~"Attention")), 
+             labels = c(expression(Q[0]~"SND"),expression(Q[0]~"EXPD")), digits = 3)
+pairs.panels(data.frame(coef(smptSNDMLM)["q0.(Intercept)"] + coef(smptSNDMLM)["q0.conditionAutomatic"],
+                        coef(smptEXPDMLM)["q0.(Intercept)"] + coef(smptEXPDMLM)["q0.conditionAutomatic"]), 
+             main = expression(bold("SND vs EXPD"~Q[0]~"Automatic")), 
+             labels = c(expression(Q[0]~"SND"),expression(Q[0]~"EXPD")), digits = 3)
+pairs.panels(data.frame(coef(smptSNDMLM)["q0.(Intercept)"] + coef(smptSNDMLM)["q0.conditionEscape"],
+                        coef(smptEXPDMLM)["q0.(Intercept)"] + coef(smptEXPDMLM)["q0.conditionEscape"]), 
+             main = expression(bold("SND vs EXPD"~Q[0]~"Escape")), 
+             labels = c(expression(Q[0]~"SND"),expression(Q[0]~"EXPD")), digits = 3)
+pairs.panels(data.frame(coef(smptSNDMLM)["q0.(Intercept)"] + coef(smptSNDMLM)["q0.conditionTangible"],
+                        coef(smptEXPDMLM)["q0.(Intercept)"] + coef(smptEXPDMLM)["q0.conditionTangible"]), 
+             main = expression(bold("SND vs EXPD"~Q[0]~"Tangible")), 
+             labels = c(expression(Q[0]~"SND"),expression(Q[0]~"EXPD")), digits = 3)
+
+pairs.panels(data.frame(coef(smptSNDMLM)["alpha.(Intercept)"] + coef(smptSNDMLM)["alpha.conditionAttention"],
+                        coef(smptEXPDMLM)["alpha.(Intercept)"] + coef(smptEXPDMLM)["alpha.conditionAttention"]), 
+             main = expression(bold("SND vs EXPD"~alpha~"Attention")), 
+             labels = c(expression(alpha~"SND"),expression(alpha~"EXPD")), digits = 3)
+pairs.panels(data.frame(coef(smptSNDMLM)["alpha.(Intercept)"] + coef(smptSNDMLM)["alpha.conditionAutomatic"],
+                        coef(smptEXPDMLM)["alpha.(Intercept)"] + coef(smptEXPDMLM)["alpha.conditionAutomatic"]), 
+             main = expression(bold("SND vs EXPD"~alpha~"Automatic")), 
+             labels = c(expression(alpha~"SND"),expression(alpha~"EXPD")), digits = 3)
+pairs.panels(data.frame(coef(smptSNDMLM)["alpha.(Intercept)"] + coef(smptSNDMLM)["alpha.conditionEscape"],
+                        coef(smptEXPDMLM)["alpha.(Intercept)"] + coef(smptEXPDMLM)["alpha.conditionEscape"]), 
+             main = expression(bold("SND vs EXPD"~alpha~"Escape")), 
+             labels = c(expression(alpha~"SND"),expression(alpha~"EXPD")), digits = 3)
+pairs.panels(data.frame(coef(smptSNDMLM)["alpha.(Intercept)"] + coef(smptSNDMLM)["alpha.conditionTangible"],
+                        coef(smptEXPDMLM)["alpha.(Intercept)"] + coef(smptEXPDMLM)["alpha.conditionTangible"]), 
+             main = expression(bold("SND vs EXPD"~alpha~"Tangible")), 
+             labels = c(expression(alpha~"SND"),expression(alpha~"EXPD")), digits = 3)
+```
